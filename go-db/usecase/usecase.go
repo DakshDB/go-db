@@ -275,7 +275,23 @@ func (h *godbUsecase) Save(databaseName string) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(databaseName+".json", data, 0644)
+	err = os.WriteFile("db-data/"+databaseName+".json", data, 0644)
+	if err != nil {
+		// If path does not exist, create the directory
+		if os.IsNotExist(err) {
+			err = os.MkdirAll("db-data", os.ModePerm)
+			if err != nil {
+				return err
+			}
+			err = os.WriteFile("db-data/"+databaseName+".json", data, 0644)
+			if err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+	return nil
 }
 
 // Load the database state from a file
@@ -285,7 +301,7 @@ func (h *godbUsecase) Load(databaseName string) error {
 		return nil
 	}
 
-	data, err := os.ReadFile(databaseName + ".json")
+	data, err := os.ReadFile("db-data/" + databaseName + ".json")
 	if err != nil {
 		// If the file does not exist, create a new database
 		if os.IsNotExist(err) {
